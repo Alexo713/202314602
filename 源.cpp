@@ -3,6 +3,7 @@
 #include <math.h>
 
 int ele;   //电梯所在楼层
+int max = 4;   //电梯核载人数
 int st[10], end[10];   //用户起始\目标楼层情况
 
 void sort(int a[], int b[])
@@ -44,57 +45,81 @@ int main()
 	int t = 0, n2 = 0;   //t记录时间，n2记录电梯内人数
 	int dir;
 	st[0] > ele ? dir = 1 : dir = -1;   //判断电梯的初始运行方向
-	int top = -99;   //top标记电梯在哪一层转向
+	int top = 99, btm = -99;   //top,btm标记电梯在哪一层转向
 	printf("电梯的运行状况如下:\n");
 	printf("楼层 人数 时间\n");
 	printf("%d %d %d\n", ele, 0, 0);
 	
 	//电梯运行
-	while (n1 > -1) {
+	while (n1 > 0) {
 	    
-		//确定top值
-		for (int i = 0; i < 10; i++) {
-			if ((st[i] > 0) && ((st[i] * dir > top * dir)||(top == -99))) {
-				top = st[i];
+		//向上运行时确定top值
+		if (dir == 1) {
+			for (int i = 0; i < 10; i++) {
+				if ((st[i] > 0) && ((st[i] > top) || (top == 99))) {
+					top = st[i];
+				}
+				if ((st[i] == -1) && (end[i] > top)){
+					top = end[i];
+				}
+			}
+		}
+		
+        //向下运行时确定btm值
+		else {
+			for (int i = 0; i < 10; i++) {
+				if ((st[i] > 0) && ((st[i] < btm) || (btm == -99))) {
+					btm = st[i];
+				}
+				if ((st[i] == -1) && (end[i] != -1) && (end[i] < btm)) {
+					btm = end[i];
+				}
 			}
 		}
 		
 		//用户下梯
-		int dw = -1, f2 = 99;
-		for (int i = 0; i < 10; i++) {
-			if ((ele == end[i]) && (st[i] == -1)) {
+		for (int i = 0; i < 10; i++) {   
+			int dw = -1, f1 = 99;   //f1记录下梯用户索引
+			if ((ele == end[i]) && (st[i] == -1)) {   //判断当前层有无用户需下梯
 				dw = 1;
-				f2 = i;
+				f1 = i;
+			}
+			if (dw == 1) {
+				n2--;
+				end[f1] = -1;   //下梯标记
+				printf("%d %d %d", ele, n2, t);
+				printf("  有人下梯\n");
+				n1--;
 			}
 		}
-		if (dw == 1) {
-			n2--;
-			end[f2] = -1;   //下梯标记
-			printf("%d %d %d", ele, n2, t);
-			printf("  有人下梯\n");
-			n1--;
+		
+		//超载处理
+		if (n2 == max) {
+			if (ele == top) {
+				dir = -dir;
+			}
+			ele += dir;
+			t++;
+			continue;
 		}
 		
 		//用户上梯
-		int up = -1, f1 = 99;   //f1记录上梯用户索引
-		for (int i = 0; i < 10; i++) {   //判断当前层有无用户需上梯
+		int up = -1, f2 = 99;
+		for (int i = 0; i < 10; i++) {
 			if (ele == st[i]) {
 				up = 1;
-				f1 = i;
+				f2 = i;
 			}
 		}
 		if (up == 1) {
-			st[f1] = -1;   //上梯标记
 			n2++;
-			if (end[f1] * dir > top * dir) {
-				top = end[f1];   //若该用户目标楼层超出top，则将top值更新
-			}
+			st[f2] = -1;   //上梯标记
 			printf("%d %d %d", ele, n2, t);
 			printf("  有人上梯\n");
 		}
-		
+				
 		//电梯转向
-		if (ele == top) {
+		if (((dir == 1) && (ele == top)) || ((dir == -1) && (ele == btm))) {
 			dir = -dir;
 		}
 
@@ -102,5 +127,5 @@ int main()
 		ele += dir;
 		t++;
 	}
-	return 0;
+    return 0;
 }
